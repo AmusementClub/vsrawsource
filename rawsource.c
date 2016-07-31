@@ -846,7 +846,7 @@ history_add(rs_hnd_t* rh, int frameNumber, const VSFrameRef* frame, int index, c
     // note: before this is called we already determined frame
     // was *not* in the history, no check for that here
 
-    rs_history_t* h = (rs_history_t*)calloc(1, sizeof(*rh->history));
+    rs_history_t* h = (rs_history_t*)calloc(1, sizeof(**rh->history));
     h->frameNumber = frameNumber;
     h->frame = vsapi->copyFrame(frame, core);
 
