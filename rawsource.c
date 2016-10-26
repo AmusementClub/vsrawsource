@@ -814,22 +814,6 @@ static void close_handler(rs_hnd_t *rh)
 }
 
 
-static void VS_CC
-vs_close(void *instance_data, VSCore *core, const VSAPI *vsapi)
-{
-    rs_hnd_t *rh = (rs_hnd_t *)instance_data;
-    close_handler(rh);
-}
-
-
-static void VS_CC
-vs_init(VSMap *in, VSMap *out, void **instance_data, VSNode *node,
-        VSCore *core, const VSAPI *vsapi)
-{
-    rs_hnd_t *rh = (rs_hnd_t *)*instance_data;
-    vsapi->setVideoInfo(rh->vi, rh->has_alpha + 1, node);
-}
-
 static void
 history_free(rs_history_t* node, const VSAPI *vsapi)
 {
@@ -839,6 +823,22 @@ history_free(rs_history_t* node, const VSAPI *vsapi)
     vsapi->freeFrame(node->frame);
     free(node);
 }
+
+
+static void
+history_all_free(rs_hnd_t* rh, const VSAPI *vsapi)
+{
+    if (!rh)
+        return;
+
+    for (int i = 0; i < 2; i++) {
+        if (rh->history[i]) {
+            history_free(rh->history[i], vsapi);
+            rh->history[i] = NULL;
+        }
+    }
+}
+
 
 static void
 history_add(rs_hnd_t* rh, int frameNumber, const VSFrameRef* frame, int index, const VSAPI *vsapi, VSCore* core)
@@ -892,6 +892,25 @@ static VSFrameRef* history_get(const rs_hnd_t* rh, int frameNumber, int index)
 
     return frame;
 }
+
+
+static void VS_CC
+vs_close(void *instance_data, VSCore *core, const VSAPI *vsapi)
+{
+    rs_hnd_t *rh = (rs_hnd_t *)instance_data;
+    history_all_free(rh, vsapi);
+    close_handler(rh);
+}
+
+
+static void VS_CC
+vs_init(VSMap *in, VSMap *out, void **instance_data, VSNode *node,
+        VSCore *core, const VSAPI *vsapi)
+{
+    rs_hnd_t *rh = (rs_hnd_t *)*instance_data;
+    vsapi->setVideoInfo(rh->vi, rh->has_alpha + 1, node);
+}
+
 
 static const VSFrameRef * VS_CC
 rs_get_frame(int n, int activation_reason, void **instance_data,
