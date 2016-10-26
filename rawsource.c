@@ -28,6 +28,7 @@
 
 #include "rawsource.h"
 #include "VapourSynth.h"
+#include "VSHelper.h"
 
 #define FORMAT_MAX_LEN 32
 
@@ -1071,6 +1072,14 @@ create_source(const VSMap *in, VSMap *out, void *user_data, VSCore *core,
     if (rh->vi[0].fpsNum == 0 && rh->vi[0].fpsDen == 0) {
         set_args_int64(&rh->vi[0].fpsNum, 30000, "fpsnum", &va);
         set_args_int64(&rh->vi[0].fpsDen, 1001, "fpsden", &va);
+    } else {
+        int64_t num = rh->vi[0].fpsNum;
+        int64_t den = rh->vi[0].fpsDen;
+        vs_normalizeRational(&num, &den);
+        if (num != rh->vi[0].fpsNum || den != rh->vi[0].fpsDen) {
+            set_args_int64(&rh->vi[0].fpsNum, num, "fpsnum", &va);
+            set_args_int64(&rh->vi[0].fpsDen, den, "fpsden", &va);
+        }
     }
 
     rh->row_adjust--;
