@@ -789,7 +789,7 @@ static const char * VS_CC check_args(rs_hnd_t *rh, vs_args_t *va)
     rh->has_alpha = table[i].has_alpha;
 
     VS_LOG(mtDebug, "check_args: src_format=%s dst_format=%s size=%dx%d alpha=%d frame_size=%d off_header=%d off_frame=%d",
-        table[i].format_name, &rh->vi[0].format->name, rh->vi[0].width, rh->vi[0].height, rh->has_alpha,
+        table[i].format_name, rh->vi[0].format->name, rh->vi[0].width, rh->vi[0].height, rh->has_alpha,
         frame_size, rh->off_header, rh->off_frame);
 
     return NULL;
