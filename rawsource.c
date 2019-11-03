@@ -27,8 +27,8 @@
 
 
 #include "rawsource.h"
-#include "VapourSynth.h"
-#include "VSHelper.h"
+#include <VapourSynth.h>
+#include <VSHelper.h>
 
 #define FORMAT_MAX_LEN 32
 
