@@ -39,7 +39,7 @@
 #pragma warning(disable:4996)
 #define rs_fseek _fseeki64
 #define rs_ftell _ftelli64
-#define strcasecmp stricmp
+#define strcasecmp _stricmp
 #define S_IFIFO _S_IFIFO
 #endif
 #define WINVER       0x0500
