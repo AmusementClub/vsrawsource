@@ -46,12 +46,12 @@ How to compile:
 
     $ git clone git://github.com/chikuzen/vsrawsource.git
     $ cd ./vsrawsource
-    $ ./configure
-    $ make
+    $ meson build
+    $ ninja -C build && ninja -C build install
 
-    if you want to use vs2015 then
+    if you want to use visual studio then
 
-    - create a an empty dll
+    - create an empty dll
     - add rawsource.c
 
 source code:
