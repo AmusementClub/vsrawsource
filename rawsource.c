@@ -517,7 +517,9 @@ static inline const char * VS_CC get_format(char *ctag)
 }
 static int VS_CC check_y4m(rs_hnd_t *rh, const VSAPI *vsapi)
 {
-    const char *stream_header = "YUV4MPEG2" + sizeof(rh->magic);
+    const char *stream_header = "YUV4MPEG2";
+    if (rh->file_size < 0)
+        stream_header += sizeof(rh->magic);
     const char *frame_header = "FRAME\n";
     size_t sh_length = strlen(stream_header);
     size_t fh_length = strlen(frame_header);
@@ -566,7 +568,7 @@ static int VS_CC check_y4m(rs_hnd_t *rh, const VSAPI *vsapi)
             if (strlen(rh->src_format) == 0)
                 VS_LOG(mtWarning, "check_y4m: unknown frame format in y4m header: %s", ctag);
         }
-        if (i == sizeof buff - 1) {
+        if (i == sizeof(buff) - 1) {
             return -2;
         }
     }
@@ -596,9 +598,12 @@ static int check_bmp(rs_hnd_t *rh, const VSAPI *vsapi)
     uint32_t offset_data;
     bmp_info_header_t info = { 0 };
 
-    char head[10 - sizeof(rh->magic) ];
+    char head[10];
+    long head_size = 10;
+    if (rh->file_size < 0)
+        head_size -= sizeof(rh->magic);
 
-    if (sizeof(head) != fread(head, 1, sizeof(head), rh->file))
+    if (head_size != fread(head, 1, head_size, rh->file))
         return 1;
 
     if (sizeof(uint32_t) != fread(&offset_data, 1, sizeof(uint32_t), rh->file))
@@ -637,6 +642,9 @@ static int check_header(rs_hnd_t *rh, const VSAPI *vsapi)
         VS_LOG(mtFatal, "check_header: fail to read file magic");
         return 0;
     }
+
+    if (rh->file_size > 0)
+        rewind(rh->file);
 
     if (strncmp("BM", rh->magic, 2) == 0)
         return check_bmp(rh, vsapi);
