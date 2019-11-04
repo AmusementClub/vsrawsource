@@ -181,8 +181,8 @@ write_planar_frame(const rs_hnd_t *rh, VSFrameRef **dst, const VSAPI *vsapi,
         row_size = (row_size + rh->row_adjust) & (~rh->row_adjust);
         height = vsapi->getFrameHeight(dst[0], plane);
 
-        if ( ((srcp - rh->frame_buff) + row_size*height) > (int) rh->frame_size) {
-            VS_LOG(mtCritical, "write_planar_frame: buffer overflow, check format parameters");
+        if (((srcp - rh->frame_buff) + row_size * height) > (int)rh->frame_size) {
+            VS_LOG(mtFatal, "buffer overflow, check format parameters");
             return;
         }
 
@@ -920,6 +920,15 @@ vs_init(VSMap *in, VSMap *out, void **instance_data, VSNode *node,
 }
 
 
+#define RET_IF_ERROR(cond, ...) \
+{\
+    if (cond) {\
+        snprintf(msg, 240, __VA_ARGS__);\
+        vsapi->setFilterError(msg_buff, frame_ctx);\
+        return NULL;\
+    }\
+}
+
 static const VSFrameRef * VS_CC
 rs_get_frame(int n, int activation_reason, void **instance_data,
              void **frame_data, VSFrameContext *frame_ctx, VSCore *core,
@@ -927,6 +936,9 @@ rs_get_frame(int n, int activation_reason, void **instance_data,
 {
     if (activation_reason != arInitial)
         return NULL;
+
+    char msg_buff[256] = "raws: ";
+    char *msg = msg_buff + strlen(msg_buff);
 
     rs_hnd_t *rh = (rs_hnd_t *)*instance_data;
 
@@ -945,9 +957,7 @@ rs_get_frame(int n, int activation_reason, void **instance_data,
         // pipe: detect out-of-order frame requests, which are possible
         // if vspipe --requests > 1
         static int next_frame_number = 0;
-        if (!rh->index && n != next_frame_number)
-            VS_LOG(mtCritical, "seeking a pipe is unsupported: need frame %d, requested %d",
-                next_frame_number, n);
+        RET_IF_ERROR(!rh->index && n != next_frame_number, "seeking a pipe is unsupported: need frame %d, requested %d", next_frame_number, n);
         next_frame_number = n+1;
 
 
@@ -966,11 +976,7 @@ rs_get_frame(int n, int activation_reason, void **instance_data,
         else if (rh->off_frame > 0 && !(n==0 && rh->skip_first_frame_header)) {
             // pipe: read off frame header
             // todo: non-sequential access check
-            if (rh->off_frame != fread(rh->frame_buff, 1, rh->off_frame, rh->file))
-            {
-                VS_LOG(mtCritical, "read frame header failed at frame %d", n);
-                return NULL;
-            }
+            RET_IF_ERROR(rh->off_frame != fread(rh->frame_buff, 1, rh->off_frame, rh->file), "read frame header failed at frame %d", n);
         }
         else if (rh->off_frame == 0 && n == 0 && rh->write_magic)
         {
@@ -981,11 +987,7 @@ rs_get_frame(int n, int activation_reason, void **instance_data,
             read_len -= len;
         }
 
-        if (fread(read_ptr, 1, read_len, rh->file) < read_len)
-        {
-             VS_LOG(mtCritical, "read frame failed at frame %d", n);
-             return NULL;
-        }
+        RET_IF_ERROR(fread(read_ptr, 1, read_len, rh->file) < read_len, "read frame failed at frame %d", n);
 
         dst[0] = vsapi->newVideoFrame(rh->vi[0].format, rh->vi[0].width, rh->vi[0].height,
                                       NULL, core);
@@ -1021,6 +1023,7 @@ rs_get_frame(int n, int activation_reason, void **instance_data,
 
     return dst[1];
 }
+#undef RET_IF_ERROR
 
 
 static void VS_CC
