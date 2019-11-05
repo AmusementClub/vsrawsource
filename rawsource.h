@@ -48,21 +48,20 @@
 #include <windows.h>
 #include <io.h>       /* _setmode() */
 #include <fcntl.h>    /* _O_BINARY */
+#include <string.h>
+#else
+#include <strings.h>
 #endif
-
-
 
 #include <stdio.h>
 
 #ifndef rs_fseek
-#define _FILE_OFFSET_BITS 64
 #define rs_fseek fseek
 #define rs_ftell ftell
 #endif
 
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <string.h>
 #include <stdarg.h>
 #include <inttypes.h>
 

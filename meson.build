@@ -1,9 +1,9 @@
 project('vsrawsource', 'c',
-  default_options : ['buildtype=release', 'b_ndebug=if-release', 'c_std=c99'],
+  default_options : ['buildtype=release', 'b_ndebug=if-release', 'c_std=gnu99'],
   meson_version : '>=0.48.0'
 )
 
-add_project_arguments('-ffast-math', language : 'c')
+add_project_arguments('-ffast-math', '-D_FILE_OFFSET_BITS=64', language : 'c')
 
 sources = [
   'rawsource.c'
